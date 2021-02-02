@@ -2,7 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 from datetime import date
-
+print("[INFO] Loading latest job for you...")
+print("\nPlease wait for a while...\n\n")
 url = "https://www.sarkariresult.com/latestjob.php"
 r = requests.get(url)
 htmlContent = r.content
@@ -62,6 +63,7 @@ for link in job_links:
 # Display the Job Title with there corresponding link to apply
 for i in range(0, len(AlljobLinks)):
     print(f'Job Title: {AlljobTitle[i]} \nApply Link: {AlljobLinks[i]}')
+    print()
 
 # Exit the program after pressing 'E' or 'e'
 while True:
