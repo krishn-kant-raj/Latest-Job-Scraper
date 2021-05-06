@@ -12,18 +12,20 @@ def menu():
         global choice
         global exit_count
         os.system('cls')
-        print("1 for Latest Jobs\n2 for Admissions")
+        print("1 for Latest Jobs\n2 for Admissions\n3 Exit")
         choice = int(input("Enter your choice: "))
-        if choice==1:    
+        if choice == 1:    
             url = "https://www.sarkariresult.com/latestjob.php"
             return url
-        elif choice==2:    
+        elif choice == 2:    
             url= "https://www.sarkariresult.com/admission.php"
             return url
+        elif choice == 3:
+            exit(0)
         else:
             print('Invalid input!! Please enter the valid choice.')
             exit_count+=1
-            if exit_count==3:
+            if exit_count == 3:
                 print('Sorry! Your Maximum Limit Exists.')
                 exit(0)
             else:
@@ -38,7 +40,7 @@ def menu():
             menu()
 
 def scrap_info(url):
-    if url==None or choice>2:
+    if url == None or choice>3:
         menu()
     print("[INFO] Loading latest job for you...")
     print("\n[INFO] Please wait for a while...\n\n")
@@ -111,7 +113,7 @@ def scrap_info(url):
         print(line)
         if ch == 'E' or ch == 'e':
             exit(0)
-        elif ch=='C' or ch=='c':
+        elif ch=='C' or ch == 'c':
             menu()
 while True:           
     url = menu()
