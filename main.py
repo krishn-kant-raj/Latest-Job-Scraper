@@ -1,25 +1,48 @@
+# import important libraries
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 from datetime import date
-
-choice = 1
+import os
+choice = None
 exit_count = 0
-while True:
-    print("1 for Latest Jobs\n2 for Admissions")
-    choice = int(input("Enter your choice: "))
-    if choice==1:    
-        url = "https://www.sarkariresult.com/latestjob.php"
-    elif choice==2:    
-        url= "https://www.sarkariresult.com/admission.php"
-    else:
-        count+=1
-        if exit_count==3:
-            break
+# define a menu function
+def menu():
+    try:
+        global choice
+        global exit_count
+        os.system('cls')
+        print("1 for Latest Jobs\n2 for Admissions")
+        choice = int(input("Enter your choice: "))
+        if choice==1:    
+            url = "https://www.sarkariresult.com/latestjob.php"
+            return url
+        elif choice==2:    
+            url= "https://www.sarkariresult.com/admission.php"
+            return url
         else:
-            continue
+            print('Invalid input!! Please enter the valid choice.')
+            exit_count+=1
+            if exit_count==3:
+                print('Sorry! Your Maximum Limit Exists.')
+                exit(0)
+            else:
+                menu()
+    except ValueError:
+        print('Enter the valid choice in number')
+        exit_count+=1
+        if exit_count==3:
+            print('Sorry! Your Maximum Limit Exists.')
+            exit(0)
+        else:
+            menu()
+
+def scrap_info(url):
+    if url==None or choice>2:
+        menu()
     print("[INFO] Loading latest job for you...")
     print("\n[INFO] Please wait for a while...\n\n")
+    
     r = requests.get(url)
     htmlContent = r.content
     soup = BeautifulSoup(htmlContent, 'html.parser')
@@ -89,4 +112,7 @@ while True:
         if ch == 'E' or ch == 'e':
             exit(0)
         elif ch=='C' or ch=='c':
-            continue
+            menu()
+while True:           
+    url = menu()
+    scrap_info(url)
