@@ -42,7 +42,10 @@ Start the server
 ![Admissions Detail Scraping](https://github.com/krishn-kant-raj/Latest-Job-Scraper/blob/master/Images/Admission.jpg)
 
 ### .exe file Screenshots
-*Currently it's not working properly. I'm working on it and will update very soon.*
+All issues are fixed as of mine. If you are facing any problem please [create an issue](https://github.com/krishn-kant-raj/Latest-Job-Scraper/issues/new) I will try to solve it ASAP.
+![Latest Job Exe Output](https://github.com/krishn-kant-raj/Latest-Job-Scraper/blob/master/Images/Latest_job_exe.png)
+![Latest Job Exe Output](https://github.com/krishn-kant-raj/Latest-Job-Scraper/blob/master/Images/Admissions_exe.png)
+
 ## Features
 
 - Totally Advertisement Free Web-App!
