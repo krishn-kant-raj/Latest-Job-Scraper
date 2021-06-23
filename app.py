@@ -76,7 +76,7 @@ def main():
         
     if choice=='Latest Job':
         
-        st.title('Scraping All Latest Jobs')
+        st.title('Scraping All Latest Jobs for you')
         
         url = "https://www.sarkariresult.com/latestjob.php"
         page = requests.get(url)
@@ -164,7 +164,7 @@ def main():
         st.balloons()
         
     elif choice=='Admissions':
-        st.title('Scraping All Latest Admissions')
+        st.title('Scraping All Latest Admissions for you')
         url= "https://www.sarkariresult.com/admission.php"
         page = requests.get(url)
         tree = html.fromstring(page.content)
