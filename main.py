@@ -1,120 +1,144 @@
 # import important libraries
-import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 from datetime import date
+from lxml import html
+import requests
 import os
+
 choice = None
-exit_count = 0
+
+# Empty list to store the fianl data
+AlljobTitle = []
+AlljobLinks = []
+LastApply = []
+# Temporary lists to cleanup data
+Links = []
+Title = []
+Filter = []
+ApplyDate = []
+FinalDates = []
+FinalTitle = []
 # define a menu function
 def menu():
+    AlljobTitle.clear()
+    AlljobLinks.clear()
+    Links.clear()
+    LastApply.clear()
+    Title.clear()
+    Filter.clear()
+    ApplyDate.clear()
+    FinalDates.clear()
+    FinalTitle.clear()
     try:
         global choice
-        global exit_count
         os.system('cls')
-        print("1 for Latest Jobs\n2 for Admissions\n3 Exit")
+        print("1 Latest Jobs\n2 Admissions\n3 Exit")
         choice = int(input("Enter your choice: "))
         if choice == 1:    
-            url = "https://www.sarkariresult.com/latestjob.php"
+            url = "https://www.sarkariresult.com/latestjob/"
             return url
         elif choice == 2:    
-            url= "https://www.sarkariresult.com/admission.php"
+            url= "https://www.sarkariresult.com/admission/"
             return url
         elif choice == 3:
             exit(0)
-        else:
-            print('Invalid input!! Please enter the valid choice.')
-            exit_count+=1
-            if exit_count == 3:
-                print('Sorry! Your Maximum Limit Exists.')
-                exit(0)
-            else:
-                menu()
     except ValueError:
         print('Enter the valid choice in number')
-        exit_count+=1
-        if exit_count==3:
-            print('Sorry! Your Maximum Limit Exists.')
-            exit(0)
-        else:
-            menu()
+
 
 def scrap_info(url):
-    if url == None or choice>3:
+    if url == None:
         menu()
-    print("[INFO] Loading latest job for you...")
-    print("\n[INFO] Please wait for a while...\n\n")
+    if choice==1:
+        print("[INFO] Loading latest job for you...")
+    if choice==2:
+        print("[INFO] Loading latest admissions for you...")
     
-    r = requests.get(url)
-    htmlContent = r.content
+    page = requests.get(url)
+    tree = html.fromstring(page.content)
+    htmlContent = page.content
     soup = BeautifulSoup(htmlContent, 'html.parser')
 
+    print("[INFO] Please wait for a while...\n")
+    
     # Extract all <li> tag contents and all links from Anchor '<a>' tag
     li_text = soup.find_all('li')
     job_links = soup.find_all('a')
-
-    # Empty list to store the Title and Links of latest job
-    AlljobTitle = []
-    AlljobLinks = []
+    
+    for i in range(len(li_text)):
+        xpathLastApply = f'//*[@id="post"]/ul[{i}]/li/text()'
+        ApplyDate.append(tree.xpath(xpathLastApply))
+        xpathTitle = f'//*[@id="post"]/ul[{i}]/li/a/text()'
+        Title.append(tree.xpath(xpathTitle))
+    # Cleaning of Title String
+    for t in Title:
+        ttl = str(t).replace("['",'')
+        ttl = ttl.replace("']",'')
+        FinalTitle.append(ttl)
+        
+    # Cleaning Date String    
+    for i in ApplyDate:
+        lstdt = str(i).replace("']",'')
+        lstdt = lstdt.replace("[' ",'')
+        FinalDates.append(lstdt)
 
     # Extract all job title with latest date <= today
-    for title in li_text:
+    for dt in range(0,len(FinalDates)):
         try:
-            text = title.text
             today = date.today()
             today = today.strftime("%d/%m/%Y")
             today = datetime.strptime(today, '%d/%m/%Y')
-            date_str = text[-10:]
+            if FinalDates[dt][-2:] == 'NA':
+                continue
+            date_str = FinalDates[dt][-10:]
             dt_obj = datetime.strptime(date_str, '%d/%m/%Y')
-            if text[-4:] == '2021' and (dt_obj >= today) == True:
-                AlljobTitle.append(text)
+            if (FinalDates[dt][-4:] == '2021' and (dt_obj >= today) == True):
+                Filter.append(dt)
         except ValueError:
-            pass
-
-    latest_job_count = len(AlljobTitle)
-    job_count = 0
-
+            continue
+        
     # Extract all links from page of latest job
     # Apply some condition to remove unwanted links
-    for link in job_links:
-        linkText = link.get('href')
-        if job_count == latest_job_count:
-            break
-        if linkText[-4:] == 'com/':
-            continue
-        elif 'answerkey' in linkText or 'syllabus' in linkText:
-            continue
-        elif 'latestjob.php' in linkText:
-            continue
-        elif 'admitcard' in linkText or 'result.php' in linkText or '#' in linkText:
-            continue
-        elif 'store' in linkText or 'apps' in linkText or 'apple' in linkText:
-            continue
-        elif '20' in linkText or '19' in linkText or '18' in linkText or '17' in linkText or '16' in linkText:
-            continue
-        elif linkText[-10:] == 'upsssc.php':
-            continue
-        elif linkText[-7:] == 'all.php':
-            continue
-        else:
-            AlljobLinks.append(linkText)
-            job_count += 1
+    if choice==1:
+        for link in job_links[21:]:
+            linkText = link.get('href')
+            Links.append(linkText)
+    if choice==2:
+        for link in job_links[20:]:
+            linkText = link.get('href')
+            Links.append(linkText)
+    
+    for indx in Filter:
+        if choice==1:
+            AlljobTitle.append(FinalTitle[indx].replace('Online Form 2021','').strip())
+        if choice==2:
+            AlljobTitle.append(FinalTitle[indx].replace('Admission Online Form 2021','').strip())
+        AlljobLinks.append(Links[indx])
+        LastApply.append(FinalDates[indx])
+    #LastApply = [FinalDates[i] for i in Filter]
+    #LastApply = map(FinalDates.__getitem__, Filter)
 
+def show_jobs():
     # Display the Job Title with there corresponding link to apply
-    for i in range(0, len(AlljobLinks)):
-        print(f'Job Title: {AlljobTitle[i]} \nApply Link: {AlljobLinks[i]}')
-        print()
-
+    if choice==1:
+        for num in range(len(Filter)):
+            print(f"Job Title: {AlljobTitle[num]} \n{LastApply[num]} \nApply Link: {AlljobLinks[num]}\n")
+    if choice==2:
+        for num in range(len(Filter)):
+            print(f"Collage Name: {AlljobTitle[num]} \n{LastApply[num]} \nApply Link: {AlljobLinks[num]}\n")
     # Exit the program after pressing 'E' or 'e'
-        star = '*****'
-        line = star.center(90, "-")
-        print(line)
-        ch = input("Enter 'E' or 'e' to exit and 'C' or 'c' to continue: ")
-        print(line)
-        if ch == 'E' or ch == 'e':
-            exit(0)
-        elif ch=='C' or ch == 'c':
-            menu()
+    star = '*****'
+    line = star.center(90, "-")
+    print(line)
+    ch = input("Enter 'E/e' to exit and 'C/c' to continue: ")
+    print(line)
+    if ch == 'E' or ch == 'e':
+        exit(0)
+    elif ch=='C' or ch == 'c':
+        pass
+        
 while True:           
-    url = menu()
-    scrap_info(url)
+
+    scrap_info(menu())
+    show_jobs()

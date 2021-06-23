@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from datetime import date
 import streamlit as st
+from lxml import html
 import pandas as pd 
 import numpy as np
 import requests
@@ -74,11 +75,13 @@ def main():
         st.markdown(about)
         
     if choice=='Latest Job':
+        
         st.title('Scraping All Latest Jobs')
         
         url = "https://www.sarkariresult.com/latestjob.php"
-        r = requests.get(url)
-        htmlContent = r.content
+        page = requests.get(url)
+        tree = html.fromstring(page.content)
+        htmlContent = page.content
         soup = BeautifulSoup(htmlContent, 'html.parser')
         # Extract all <li> tag contents and all links from Anchor '<a>' tag
         li_text = soup.find_all('li')
@@ -88,52 +91,61 @@ def main():
         AlljobTitle = []
         AlljobLinks = []
         LastDate = []
-
+        # Temporary lists to cleanup data
+        LastApply = []
+        Links = []
+        Title = []
+        Filter = []
+        ApplyDate = []
+        FinalDates = []
+        FinalTitle = []
         # Extract all job title with latest date <= today
-        for title in li_text:
+
+        for i in range(len(li_text)):
+            xpathLastApply = f'//*[@id="post"]/ul[{i}]/li/text()'
+            ApplyDate.append(tree.xpath(xpathLastApply))
+            xpathTitle = f'//*[@id="post"]/ul[{i}]/li/a/text()'
+            Title.append(tree.xpath(xpathTitle))
+        # Cleaning of Title String
+        for t in Title:
+            ttl = str(t).replace("['",'')
+            ttl = ttl.replace("']",'')
+            FinalTitle.append(ttl)
+            
+        # Cleaning Date String    
+        for i in ApplyDate:
+            lstdt = str(i).replace("']",'')
+            lstdt = lstdt.replace("[' ",'')
+            FinalDates.append(lstdt)
+        for dt in range(0,len(FinalDates)):
             try:
-                text = title.text
                 today = date.today()
                 today = today.strftime("%d/%m/%Y")
                 today = datetime.strptime(today, '%d/%m/%Y')
-                date_str = text[-10:]
+                if FinalDates[dt][-2:] == 'NA':
+                    continue
+                date_str = FinalDates[dt][-10:]
                 dt_obj = datetime.strptime(date_str, '%d/%m/%Y')
-                if text[-4:] == '2021' and (dt_obj >= today) == True:
-                    AlljobTitle.append(text[:-40])
-                    LastDate.append(text[-10:])
+                if (FinalDates[dt][-4:] == '2021' and (dt_obj >= today) == True):
+                    Filter.append(dt)
             except ValueError:
-                pass
-        latest_job_count = len(AlljobTitle)
-        job_count = 0
+                continue
+
         
         # Extract all links from page of latest job
         # Apply some condition to remove unwanted links
-        for link in job_links:
+        for link in job_links[21:]:
             linkText = link.get('href')
-            if job_count == latest_job_count:
-                break
-            if linkText[-4:] == 'com/':
-                continue
-            elif 'answerkey' in linkText or 'syllabus' in linkText:
-                continue
-            elif 'latestjob.php' in linkText:
-                continue
-            elif 'admitcard' in linkText or 'result.php' in linkText or '#' in linkText:
-                continue
-            elif 'store' in linkText or 'apps' in linkText or 'apple' in linkText:
-                continue
-            elif '20' in linkText or '19' in linkText or '18' in linkText or '17' in linkText or '16' in linkText:
-                continue
-            elif linkText[-10:] == 'upsssc.php':
-                continue
-            elif linkText[-7:] == 'all.php':
-                continue
-            else:
-                AlljobLinks.append(linkText)
-                job_count += 1
-                
+            Links.append(linkText)
+
+        for indx in Filter:
+            text = FinalTitle[indx].replace('Online Form','').strip()
+            text = text.replace('2021','').strip()
+            AlljobTitle.append(text)
+            AlljobLinks.append(Links[indx])
+            LastApply.append(FinalDates[indx])    
         data = {'Job_Title':AlljobTitle,
-                'Last_apply_date':LastDate,
+                'Last_apply_date':LastApply,
                 'Job_link':AlljobLinks
                 }
         data = pd.DataFrame(data)
@@ -141,7 +153,7 @@ def main():
         # Display the Job Title with there corresponding link to apply
         for i in range(0, len(AlljobLinks)):
             st.write('**Job Title:**', AlljobTitle[i])
-            st.write('**Last Apply Date:**',LastDate[i])
+            st.write('**Last Apply Date:**',LastApply[i])
             st.write('**Apply Link:**', AlljobLinks[i])
             st.markdown("-----")
         filename = str(today)+'-Jobs'+'.csv'
@@ -154,8 +166,9 @@ def main():
     elif choice=='Admissions':
         st.title('Scraping All Latest Admissions')
         url= "https://www.sarkariresult.com/admission.php"
-        r = requests.get(url)
-        htmlContent = r.content
+        page = requests.get(url)
+        tree = html.fromstring(page.content)
+        htmlContent = page.content
         soup = BeautifulSoup(htmlContent, 'html.parser')
         # Extract all <li> tag contents and all links from Anchor '<a>' tag
         li_text = soup.find_all('li')
@@ -165,62 +178,71 @@ def main():
         AlljobTitle = []
         AlljobLinks = []
         LastDate = []
+        # Temporary lists to cleanup data
+        LastApply = []
+        Links = []
+        Title = []
+        Filter = []
+        ApplyDate = []
+        FinalDates = []
+        FinalTitle = []
 
-        # Extract all job title with latest date <= today
-        for title in li_text:
+        for i in range(len(li_text)):
+            xpathLastApply = f'//*[@id="post"]/ul[{i}]/li/text()'
+            ApplyDate.append(tree.xpath(xpathLastApply))
+            xpathTitle = f'//*[@id="post"]/ul[{i}]/li/a/text()'
+            Title.append(tree.xpath(xpathTitle))
+        # Cleaning of Title String
+        for t in Title:
+            ttl = str(t).replace("['",'')
+            ttl = ttl.replace("']",'')
+            FinalTitle.append(ttl)
+            
+        # Cleaning Date String    
+        for i in ApplyDate:
+            lstdt = str(i).replace("']",'')
+            lstdt = lstdt.replace("[' ",'')
+            FinalDates.append(lstdt)
+        for dt in range(0,len(FinalDates)):
             try:
-                text = title.text
                 today = date.today()
                 today = today.strftime("%d/%m/%Y")
                 today = datetime.strptime(today, '%d/%m/%Y')
-                date_str = text[-10:]
+                if FinalDates[dt][-2:] == 'NA':
+                    continue
+                date_str = FinalDates[dt][-10:]
                 dt_obj = datetime.strptime(date_str, '%d/%m/%Y')
-                if text[-4:] == '2021' and (dt_obj >= today) == True:
-                    if ('Admission' in text):
-                        text = text.replace('Admission','')
-                    AlljobTitle.append(text[:-40])
-                    LastDate.append(text[-10:])
+                if (FinalDates[dt][-4:] == '2021' and (dt_obj >= today) == True):
+                    Filter.append(dt)
             except ValueError:
-                pass
-        latest_job_count = len(AlljobTitle)
-        job_count = 0
+                continue
+
         
         # Extract all links from page of latest job
         # Apply some condition to remove unwanted links
-        for link in job_links:
+        for link in job_links[20:]:
             linkText = link.get('href')
-            if job_count == latest_job_count:
-                break
-            if linkText[-4:] == 'com/':
-                continue
-            elif 'answerkey' in linkText or 'syllabus' in linkText:
-                continue
-            elif 'latestjob.php' in linkText:
-                continue
-            elif 'admitcard' in linkText or 'result.php' in linkText or '#' in linkText:
-                continue
-            elif 'store' in linkText or 'apps' in linkText or 'apple' in linkText:
-                continue
-            elif '20' in linkText or '19' in linkText or '18' in linkText or '17' in linkText or '16' in linkText:
-                continue
-            elif linkText[-10:] == 'upsssc.php':
-                continue
-            elif linkText[-7:] == 'all.php':
-                continue
+            Links.append(linkText)
+
+        for indx in Filter:
+            text = FinalTitle[indx].replace('Online Form','').strip()
+            text = text.replace('2021','').strip()
+            if ('Admission' in text):
+                AlljobTitle.append(text.replace('Admission','').strip())
             else:
-                AlljobLinks.append(linkText)
-                job_count += 1
-                
-        data = {'Collage_name':AlljobTitle,
-                'Last_apply_date':LastDate,
-                'Apply_link':AlljobLinks
+                AlljobTitle.append(text)
+            AlljobLinks.append(Links[indx])
+            LastApply.append(FinalDates[indx])    
+        data = {'College_name':AlljobTitle,
+                'Last_apply_date':LastApply,
+                'Job_link':AlljobLinks
                 }
         data = pd.DataFrame(data)
         
         # Display the Job Title with there corresponding link to apply
         for i in range(0, len(AlljobLinks)):
             st.write('**Collage Name:**', AlljobTitle[i])
-            st.write('**Last Apply Date:**',LastDate[i])
+            st.write('**Last Apply Date:**',LastApply[i])
             st.write('**Apply Link:**', AlljobLinks[i])
             st.markdown("-----")
         filename = str(today)+'-Admissions'+'.csv'
